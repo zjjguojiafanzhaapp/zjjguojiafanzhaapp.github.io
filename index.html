@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>幸运大转盘 · 天天赢现金</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ height:100%; }
+  body{
+    font-family:"PingFang SC","Microsoft YaHei",sans-serif;
+    background:radial-gradient(circle at 50% 0%, #7a0d12 0%, #4e080c 45%, #260306 100%);
+    color:#fff; overflow-x:hidden; min-height:100%;
+    padding-bottom:30px;
+  }
+  /* 顶部光晕 */
+  body::before{
+    content:""; position:fixed; top:-120px; left:50%; transform:translateX(-50%);
+    width:520px; height:320px; pointer-events:none;
+    background:radial-gradient(ellipse, rgba(255,200,60,.35), transparent 70%);
+  }
+  .wrap{ max-width:430px; margin:0 auto; padding:14px 14px 0; position:relative; z-index:1; }
+
+  /* 顶部标题 */
+  .top{ text-align:center; padding:6px 0 8px; }
+  .title{
+    font-size:34px; font-weight:900; letter-spacing:2px;
+    background:linear-gradient(180deg,#fff6c4 0%,#ffd447 45%,#ff8a00 100%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 2px 0 #7a1b00) drop-shadow(0 0 14px rgba(255,180,40,.65));
+    animation:titleGlow 1.6s ease-in-out infinite alternate;
+  }
+  @keyframes titleGlow{ from{filter:drop-shadow(0 2px 0 #7a1b00) drop-shadow(0 0 8px rgba(255,180,40,.45));}
+                       to  {filter:drop-shadow(0 2px 0 #7a1b00) drop-shadow(0 0 20px rgba(255,210,80,.95));} }
+  .subtitle{
+    display:inline-block; margin-top:6px; font-size:12px; color:#5a1400;
+    background:linear-gradient(90deg,#ffe27a,#fff3b0,#ffe27a);
+    border-radius:20px; padding:3px 14px; font-weight:700;
+  }
+  .subtitle b{ color:#d40000; }
+
+  /* 跑马灯 */
+  .ticker{
+    margin:10px 0 4px; background:rgba(0,0,0,.35); border:1px solid rgba(255,210,90,.35);
+    border-radius:22px; height:30px; line-height:30px; overflow:hidden; position:relative;
+    font-size:12.5px;
+  }
+  .ticker .ico{ position:absolute; left:10px; top:0; z-index:2; }
+  .ticker .track{ white-space:nowrap; display:inline-block; padding-left:84px;
+    animation:marquee 22s linear infinite; color:#ffe9a8; }
+  .ticker .track span{ margin-right:34px; }
+  .ticker .track b{ color:#6dff8e; }
+  @keyframes marquee{ from{transform:translateX(0)} to{transform:translateX(-50%)} }
+
+  /* 转盘区 */
+  .stage{ position:relative; width:322px; height:322px; margin:14px auto 0; }
+  .pointer{
+    position:absolute; top:-10px; left:50%; transform:translateX(-50%);
+    width:0;height:0; z-index:5;
+    border-left:17px solid transparent; border-right:17px solid transparent;
+    border-top:30px solid #ff2828;
+    filter:drop-shadow(0 3px 4px rgba(0,0,0,.55));
+  }
+  .pointer::after{ content:""; position:absolute; top:-34px; left:-9px;
+    width:18px;height:18px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,#fff,#ffd447 60%,#e08600);
+    border:2px solid #fff; }
+  .ring{
+    position:absolute; inset:0; border-radius:50%;
+    background:conic-gradient(#ffd447 0 12deg,#a30d0d 12deg 24deg,#ffd447 24deg 36deg,#a30d0d 36deg 48deg,
+      #ffd447 48deg 60deg,#a30d0d 60deg 72deg,#ffd447 72deg 84deg,#a30d0d 84deg 96deg,
+      #ffd447 96deg 108deg,#a30d0d 108deg 120deg,#ffd447 120deg 132deg,#a30d0d 132deg 144deg,
+      #ffd447 144deg 156deg,#a30d0d 156deg 168deg,#ffd447 168deg 180deg,#a30d0d 180deg 192deg,
+      #ffd447 192deg 204deg,#a30d0d 204deg 216deg,#ffd447 216deg 228deg,#a30d0d 228deg 240deg,
+      #ffd447 240deg 252deg,#a30d0d 252deg 264deg,#ffd447 264deg 276deg,#a30d0d 276deg 288deg,
+      #ffd447 288deg 300deg,#a30d0d 300deg 312deg,#ffd447 312deg 324deg,#a30d0d 324deg 336deg,
+      #ffd447 336deg 348deg,#a30d0d 348deg 360deg);
+    box-shadow:0 0 0 5px #7c0b0b, 0 0 26px rgba(255,200,60,.55), 0 10px 26px rgba(0,0,0,.55);
+    animation:lampSpin 6s linear infinite;
+  }
+  @keyframes lampSpin{ to{transform:rotate(360deg);} }
+  .wheel{
+    position:absolute; inset:13px; border-radius:50%; overflow:hidden;
+    background:conic-gradient(
+      #f6c232 0deg 30deg, #d9231c 30deg 60deg,
+      #fff0b0 60deg 90deg, #f6c232 90deg 120deg,
+      #d9231c 120deg 150deg, #ffe98a 150deg 180deg,
+      #f6c232 180deg 210deg, #d9231c 210deg 240deg,
+      #ffe98a 240deg 270deg, #f6c232 270deg 300deg,
+      #c40f7a 300deg 330deg, #b20000 330deg 360deg);
+    transition:transform 5.2s cubic-bezier(.12,.72,.08,1);
+  }
+  .lbl{
+    position:absolute; left:50%; top:50%;
+    text-align:center;
+  }
+  .lbl span{
+    display:block; line-height:1.2;
+    white-space:nowrap; font-weight:900; font-size:15px; letter-spacing:1px;
+    text-shadow:0 1px 2px rgba(0,0,0,.35);
+  }
+  .lbl.light span{ color:#a30d0d; }
+  .lbl.dark span{ color:#ffe680; }
+  .lbl.pink span{ color:#fff0f8; }
+  .hub{
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    width:62px; height:62px; border-radius:50%; z-index:4;
+    background:radial-gradient(circle at 35% 30%,#fff,#ffd447 55%,#d97400);
+    border:4px solid #8f1303;
+    box-shadow:0 3px 8px rgba(0,0,0,.5), inset 0 -4px 6px rgba(120,40,0,.35);
+    display:flex; align-items:center; justify-content:center;
+    font-size:12px; font-weight:900; color:#a30d0d; text-align:center; line-height:1.1;
+  }
+
+  /* 抽奖按钮 */
+  .spin-btn{
+    display:block; margin:18px auto 0; width:236px; height:60px; border:none;
+    border-radius:40px; cursor:pointer; position:relative;
+    font-size:26px; font-weight:900; letter-spacing:6px; color:#8a1500;
+    background:linear-gradient(180deg,#fff59b 0%,#ffc928 55%,#ff8a00 100%);
+    box-shadow:0 6px 0 #9c4400, 0 10px 22px rgba(0,0,0,.45), 0 0 26px rgba(255,190,50,.75);
+    animation:btnPulse 1.1s ease-in-out infinite alternate;
+  }
+  .spin-btn:active{ transform:translateY(4px); box-shadow:0 2px 0 #9c4400; }
+  .spin-btn:disabled{ filter:grayscale(.4) brightness(.85); animation:none; cursor:default; }
+  @keyframes btnPulse{ from{box-shadow:0 6px 0 #9c4400,0 8px 18px rgba(0,0,0,.45),0 0 14px rgba(255,190,50,.55);}
+                       to  {box-shadow:0 6px 0 #9c4400,0 8px 26px rgba(0,0,0,.45),0 0 34px rgba(255,220,90,1);} }
+
+  /* 余额卡 */
+  .balance-card{
+    margin:18px 4px 0; border-radius:18px; padding:16px 18px 14px;
+    background:linear-gradient(135deg,#3a070b,#5c0a0d);
+    border:1px solid rgba(255,210,90,.4);
+    box-shadow:0 8px 22px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.08);
+  }
+  .balance-card .lab{ font-size:13px; color:#e8b46a; display:flex; justify-content:space-between; }
+  .balance-card .lab em{ font-style:normal; font-size:11px; color:#9c7a55; }
+  .balance-row{ display:flex; align-items:baseline; margin-top:4px; }
+  .yuan{ font-size:24px; font-weight:900; color:#ffd447; margin-right:4px; }
+  #balance{
+    font-size:38px; font-weight:900; color:#fff5c4; letter-spacing:1px;
+    font-variant-numeric:tabular-nums; word-break:break-all;
+    text-shadow:0 0 16px rgba(255,200,60,.5);
+  }
+  #balance.bump{ animation:bump .5s ease; }
+  @keyframes bump{ 0%{transform:scale(1)} 35%{transform:scale(1.12); color:#7dff9b} 100%{transform:scale(1)} }
+  .withdraw-btn{
+    margin-top:12px; width:100%; height:48px; border:none; border-radius:26px; cursor:pointer;
+    font-size:19px; font-weight:900; letter-spacing:4px; color:#fff;
+    background:linear-gradient(180deg,#ff8a3d,#e02b1e);
+    box-shadow:0 5px 0 #8c1207, 0 8px 16px rgba(0,0,0,.4);
+  }
+  .withdraw-btn:active{ transform:translateY(3px); box-shadow:0 2px 0 #8c1207; }
+
+  .badges{ display:flex; justify-content:space-around; margin:14px 6px 0; }
+  .badges div{
+    font-size:11px; color:#ffd98a; text-align:center; opacity:.9;
+    border:1px solid rgba(255,210,90,.3); border-radius:10px; padding:6px 8px; flex:1; margin:0 4px;
+    background:rgba(0,0,0,.22);
+  }
+
+  /* 遮罩弹窗 */
+  .mask{
+    position:fixed; inset:0; background:rgba(0,0,0,.66); z-index:50;
+    display:none; align-items:center; justify-content:center; padding:26px;
+  }
+  .mask.show{ display:flex; animation:fade .2s ease; }
+  @keyframes fade{ from{opacity:0} to{opacity:1} }
+  .modal{
+    width:100%; max-width:340px; border-radius:20px; text-align:center;
+    background:linear-gradient(180deg,#fff8e0,#ffe6ad);
+    color:#5a1400; padding:24px 20px 20px; position:relative;
+    box-shadow:0 16px 50px rgba(0,0,0,.6);
+    animation:pop .32s cubic-bezier(.2,1.5,.4,1);
+  }
+  @keyframes pop{ from{transform:scale(.6);opacity:0} to{transform:scale(1);opacity:1} }
+  .modal h3{ font-size:23px; font-weight:900; }
+  .modal .big{ font-size:40px; font-weight:900; color:#e02300; margin:8px 0 2px;
+    font-variant-numeric:tabular-nums; }
+  .modal p{ font-size:14px; line-height:1.65; color:#7a4a20; margin-top:6px; }
+  .m-btn{
+    margin-top:14px; width:100%; height:46px; border:none; border-radius:24px; cursor:pointer;
+    font-size:17px; font-weight:900; letter-spacing:3px; color:#fff;
+    background:linear-gradient(180deg,#ffb53d,#ee6a00);
+    box-shadow:0 4px 0 #a04400;
+  }
+  .m-btn:active{ transform:translateY(2px); box-shadow:0 2px 0 #a04400; }
+  .m-btn.gray{ background:#bbb; box-shadow:0 4px 0 #888; margin-top:10px; }
+  .m-btn.green{ background:linear-gradient(180deg,#43d17a,#119c4b); box-shadow:0 4px 0 #0a6b32; }
+  .m-btn.red{ background:linear-gradient(180deg,#ff7a6e,#d92018); box-shadow:0 4px 0 #8c1207; }
+
+  /* 中奖彩带 */
+  .confetti{ position:absolute; inset:0; overflow:hidden; pointer-events:none; border-radius:20px; }
+  .confetti i{
+    position:absolute; top:-14px; width:9px; height:14px; opacity:.95;
+    animation:fall linear forwards;
+  }
+  @keyframes fall{ to{ transform:translateY(420px) rotate(720deg); } }
+
+  .icon{ font-size:50px; line-height:1; }
+  .icon.ok{ } .icon.warn{ } .icon.fail{ }
+
+  /* 提现弹窗 */
+  .input-row{ display:flex; align-items:center; background:#fff; border:2px solid #eab860;
+    border-radius:12px; padding:0 12px; margin-top:12px; }
+  .input-row b{ color:#e02300; font-size:20px; }
+  .input-row input{ flex:1; border:none; outline:none; font-size:22px; font-weight:900;
+    color:#5a1400; padding:12px 6px; width:100%; min-width:0; background:transparent; }
+  .all-btn{ border:none; background:#fff0d0; color:#b55300; font-weight:900; border-radius:8px;
+    padding:6px 10px; font-size:13px; cursor:pointer; }
+  .fee-tip{ margin-top:10px; font-size:12.5px; color:#b55300; background:#fff3d6;
+    border-radius:10px; padding:8px 10px; line-height:1.6; }
+  .spinner{
+    width:46px;height:46px;border-radius:50%;margin:6px auto 10px;
+    border:5px solid #f0d9a8;border-top-color:#ee6a00;
+    animation:spin 0.8s linear infinite;
+  }
+  @keyframes spin{ to{transform:rotate(360deg)} }
+
+  /* 后台设置面板 */
+  #panel .modal{ max-width:360px; text-align:left; max-height:86vh; overflow:auto; }
+  #panel h3{ text-align:center; margin-bottom:10px; }
+  .field{ margin-top:12px; }
+  .field label{ display:block; font-size:13px; font-weight:900; margin-bottom:5px; color:#7a4a20; }
+  .field input[type=number], .field select{
+    width:100%; padding:10px; border:2px solid #eab860; border-radius:10px; font-size:16px;
+    color:#5a1400; background:#fff; outline:none;
+  }
+  .field .hint{ font-size:11px; color:#a98050; margin-top:3px; }
+  .quick{ display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+  .quick button{ border:1px solid #e0a94e; background:#fff6dd; color:#8a4a00; border-radius:8px;
+    padding:5px 9px; font-size:12px; cursor:pointer; }
+  .panel-danger{ margin-top:16px; }
+
+  /* 反赌结局全屏 */
+  #reveal{ z-index:99; background:rgba(8,0,0,.94); }
+  #reveal .box{ max-width:360px; text-align:center; padding:10px 8px; }
+  #reveal h2{
+    font-size:30px; font-weight:900; margin-bottom:14px;
+    background:linear-gradient(90deg,#ff5a4d,#ffd447); -webkit-background-clip:text;
+    background-clip:text; color:transparent;
+  }
+  #reveal p{ color:#f3e2c0; font-size:16px; line-height:2; text-align:left; }
+  #reveal p b{ color:#ff6b5e; }
+  #reveal .sign{ margin-top:18px; font-size:15px; color:#ffd447; font-weight:900; letter-spacing:3px; }
+
+  /* 隐蔽入口 */
+  #secret{
+    position:fixed; right:7px; bottom:7px; z-index:40;
+    width:22px; height:22px; border-radius:50%; border:none; cursor:pointer;
+    background:rgba(255,255,255,.10); color:rgba(255,255,255,.28); font-size:11px;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  /* toast */
+  #toast{
+    position:fixed; left:50%; bottom:90px; transform:translateX(-50%) translateY(30px);
+    background:rgba(20,10,0,.92); color:#ffe9a8; padding:11px 20px; border-radius:24px;
+    font-size:14px; z-index:80; opacity:0; pointer-events:none; transition:.3s; max-width:88%;
+    text-align:center; border:1px solid rgba(255,210,90,.4);
+  }
+  #toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="title">幸运大转盘</div>
+    <div class="subtitle">官方正版活动 · 100%公平公正 · <b>天天送现金</b></div>
+  </div>
+
+  <div class="ticker">
+    <span class="ico">📢</span>
+    <div class="track" id="ticker"></div>
+  </div>
+
+  <div class="stage">
+    <div class="pointer"></div>
+    <div class="ring"></div>
+    <div class="wheel" id="wheel"></div>
+    <div class="hub">幸运<br>GO</div>
+  </div>
+
+  <button class="spin-btn" id="spinBtn">立即抽奖</button>
+
+  <div class="balance-card">
+    <div class="lab"><span>账户余额（元）</span><em id="quotaTxt"></em></div>
+    <div class="balance-row">
+      <span class="yuan">¥</span><span id="balance">0.00</span>
+    </div>
+    <button class="withdraw-btn" id="withdrawBtn">立即提现</button>
+  </div>
+
+  <div class="badges">
+    <div>🛡️ 平安<br>承保</div>
+    <div>🏦 银行<br>级加密</div>
+    <div>⚡ 60秒<br>极速到账</div>
+    <div>🎁 新用户<br>专享福利</div>
+  </div>
+</div>
+
+<!-- 通用弹窗 -->
+<div class="mask" id="mask">
+  <div class="modal" id="modalBox"></div>
+</div>
+
+<!-- 后台控制面板 -->
+<div class="mask" id="panel">
+  <div class="modal">
+    <h3>⚙️ 演示控制台</h3>
+    <div class="field">
+      <label>账户余额（元）</label>
+      <input type="number" id="setBalance" step="0.01">
+      <div class="quick">
+        <button data-bal="200">200</button>
+        <button data-bal="9999">9,999</button>
+        <button data-bal="990000">99万</button>
+        <button data-bal="9990000">999万</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>指定下一次抽奖结果</label>
+      <select id="setNext"></select>
+      <div class="hint">选择后，下一次点击抽奖必中该结果（仅生效一次）。</div>
+    </div>
+    <div class="field">
+      <label>免费提现额度（元）</label>
+      <input type="number" id="setQuota" step="1">
+      <div class="hint">该额度内提现直接到账；默认 200，对应"先让你提走一两百"。</div>
+    </div>
+    <div class="field">
+      <label>手续费触发门槛（元）</label>
+      <input type="number" id="setThreshold" step="1">
+      <div class="hint">提现金额超过该值时，要求缴纳手续费。</div>
+    </div>
+    <div class="field">
+      <label>手续费比例（%）</label>
+      <input type="number" id="setRate" step="1">
+    </div>
+    <div class="field">
+      <label>支付手续费之后</label>
+      <select id="setAfter">
+        <option value="success">提现成功（到账）</option>
+        <option value="block">继续拦截（再找借口）</option>
+      </select>
+    </div>
+    <button class="m-btn" id="savePanel">保存设置</button>
+    <button class="m-btn red panel-danger" id="showReveal">显示反赌警示结局页</button>
+    <button class="m-btn gray" id="resetAll">重置全部数据</button>
+    <button class="m-btn gray" onclick="closePanel()">关闭</button>
+  </div>
+</div>
+
+<!-- 反赌结局 -->
+<div class="mask" id="reveal">
+  <div class="box">
+    <h2>如果你真的充了钱……</h2>
+    <p>
+      前面让你连中 <b>100万、500万</b>，是为了让你相信自己运气来了；<br>
+      提现时永远 <b>只差一点点</b>，是为了让你不停地充值。<br><br>
+      转盘停在哪里、余额显示多少、要不要交手续费——<b>后台都可以随便改</b>。<br>
+      你"赢"到的每一分钱，都是提前写好的剧本。<br><br>
+      先给你一点甜头，再让你血本无归，这就是所有赌博骗局的套路。
+    </p>
+    <div class="sign">十 赌 十 骗 · 不 赌 为 赢</div>
+    <button class="m-btn" style="margin-top:18px" onclick="document.getElementById('reveal').classList.remove('show')">我知道了</button>
+  </div>
+</div>
+
+<button id="secret" title="">·</button>
+<div id="toast"></div>
+
+<script>
+/* ================= 数据与状态 ================= */
+// 12 个扇区（从正上方开始，顺时针）
+const SEGMENTS = [
+  {label:"10元",   value:10,        cls:"light"},
+  {label:"50元",   value:50,        cls:"dark"},
+  {label:"谢谢参与", value:0,       cls:"light", lines:["谢谢","参与"]},
+  {label:"100元",  value:100,       cls:"dark"},
+  {label:"500元",  value:500,       cls:"light"},
+  {label:"1000元", value:1000,      cls:"dark"},
+  {label:"谢谢参与", value:0,       cls:"light", lines:["谢谢","参与"]},
+  {label:"1万元",  value:10000,     cls:"dark"},
+  {label:"10万元", value:100000,    cls:"light", lines:["10","万元"]},
+  {label:"100万元",value:1000000,   cls:"dark",  lines:["100","万元"]},
+  {label:"500万元",value:5000000,   cls:"pink",  lines:["500","万元"]},
+  {label:"超级大奖",value:8888888,  cls:"pink",  lines:["超级","大奖"]},
+];
+const AUTO_SEQ = ["10元","50元","100元","500元","1万元","10万元","100万元","500万元","超级大奖"];
+
+const EXCUSES = [
+  "系统检测到您的账户存在异常，请联系在线客服解冻后重试。",
+  "当前提现通道维护中，请 24 小时后再试（错误码：TX-502）。",
+  "您的投注流水未达标，需再完成 5 倍有效流水方可提现。",
+  "银行卡信息校验失败，请重新绑定银行卡后再提现。",
+  "提现人数过多，您的请求已排队（前方 999+ 人）。",
+  "检测到异常登录风险，账户已被临时冻结，请联系客服。",
+];
+
+const DEFAULT_STATE = {
+  balance: 0,
+  spins: 0,
+  freeQuota: 200,      // 可免费提现额度
+  feeThreshold: 1000,  // 超过该金额收手续费
+  feeRate: 0.10,       // 10%
+  afterFee: "success", // 支付手续费后 success / block
+  nextResult: "",      // 指定下一次结果
+};
+let S = loadState();
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem("wheel_state_v1");
+    if(raw) return Object.assign({}, DEFAULT_STATE, JSON.parse(raw));
+  }catch(e){}
+  return Object.assign({}, DEFAULT_STATE);
+}
+function saveState(){ localStorage.setItem("wheel_state_v1", JSON.stringify(S)); }
+
+/* ================= 转盘绘制 ================= */
+const wheel = document.getElementById("wheel");
+(function buildWheel(){
+  // wheel 半径148，中心毂半径约35；文字整体靠近盘边放置
+  const R = 112;
+  SEGMENTS.forEach((seg,i)=>{
+    const a = i*30 + 15; // 扇区中心角（0度=正上方，顺时针）
+    const wrap = document.createElement("div");
+    wrap.className = "lbl";
+    // 先以自身中心为锚点，再转到扇区中线，沿径向外移
+    wrap.style.transform = `translate(-50%,-50%) rotate(${a}deg) translateY(-${R}px)`;
+    (seg.lines || [seg.label]).forEach(text=>{
+      const span = document.createElement("span");
+      span.className = seg.cls;
+      span.textContent = text;
+      wrap.appendChild(span);
+    });
+    wheel.appendChild(wrap);
+  });
+})();
+
+/* 跑马灯 */
+const NAMES = ["广东王**","浙江李**","江苏张**","四川刘**","河南陈**","山东赵**","湖北周**","福建吴**"];
+const PRIZES = ["30元","50元","100元","500元","1万元"];
+(function buildTicker(){
+  let html = "";
+  for(let i=0;i<14;i++){
+    const n = NAMES[i%NAMES.length];
+    const p = PRIZES[Math.floor(Math.random()*PRIZES.length)];
+    html += `<span>🎉 恭喜 ${n} 刚刚成功提现 <b>¥${p}</b></span>`;
+  }
+  document.getElementById("ticker").innerHTML = html + html;
+})();
+
+/* ================= UI 基础 ================= */
+const $ = id => document.getElementById(id);
+let toastTimer;
+function toast(msg){
+  const t = $("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove("show"), 2600);
+}
+function fmt(n){ return Number(n).toLocaleString("zh-CN",{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmt0(n){ return Number(n).toLocaleString("zh-CN"); }
+
+function renderBalance(){
+  $("balance").textContent = fmt(S.balance);
+  $("quotaTxt").textContent = S.freeQuota>0 ? `剩余免审提现额度 ¥${fmt0(S.freeQuota)}` : "";
+}
+renderBalance();
+
+/* 通用弹窗 */
+const mask=$("mask"), box=$("modalBox");
+function openModal(html){ box.innerHTML=html; mask.classList.add("show"); }
+function closeModal(){ mask.classList.remove("show"); }
+mask.addEventListener("click", e=>{ if(e.target===mask) closeModal(); });
+
+/* ================= 抽奖 ================= */
+let spinning=false, rotation=0;
+$("spinBtn").addEventListener("click", ()=>{
+  if(spinning) return;
+  spinning=true; $("spinBtn").disabled=true; $("spinBtn").textContent="抽奖中";
+
+  // 决定结果：手动指定优先，否则按剧本（前期连中，之后永远谢谢参与）
+  let label;
+  if(S.nextResult){
+    label = S.nextResult; S.nextResult="";
+  }else{
+    label = S.spins < AUTO_SEQ.length ? AUTO_SEQ[S.spins] : "谢谢参与";
+  }
+  S.spins++; saveState();
+  const idx = SEGMENTS.findIndex(s=>s.label===label);
+  const seg = SEGMENTS[idx];
+
+  // 让指针落在该扇区内（随机偏移 ±10°）
+  const offset = (Math.random()*20-10);
+  const targetAngle = idx*30 + 15 + offset;
+  const currentMod = ((rotation%360)+360)%360;
+  const wantMod = ((360-targetAngle)%360+360)%360;
+  let delta = (wantMod - currentMod + 360)%360;
+  rotation += 360*6 + delta;
+  wheel.style.transform = `rotate(${rotation}deg)`;
+
+  setTimeout(()=>{
+    spinning=false; $("spinBtn").disabled=false; $("spinBtn").textContent="立即抽奖";
+    if(seg.value>0){
+      S.balance += seg.value; saveState(); renderBalance(); bump();
+      showWin(seg);
+    }else{
+      openModal(`
+        <div class="icon">🍀</div>
+        <h3>谢谢参与</h3>
+        <p>别灰心，再来一次！<br>超级大奖说不定就在下一把～</p>
+        <button class="m-btn" onclick="closeModal()">再来一次</button>`);
+    }
+  }, 5350);
+});
+
+function bump(){
+  const b=$("balance"); b.classList.remove("bump"); void b.offsetWidth; b.classList.add("bump");
+}
+
+function showWin(seg){
+  const super_ = seg.label==="超级大奖";
+  let conf="";
+  const colors=["#ff3b30","#ffcc00","#34c759","#0a84ff","#ff2d92","#ff9500"];
+  for(let i=0;i<36;i++){
+    conf+=`<i style="left:${Math.random()*100}%;background:${colors[i%colors.length]};
+      animation-duration:${1.4+Math.random()*1.6}s;animation-delay:${Math.random()*.7}s;
+      border-radius:${Math.random()>.5?'50%':'2px'}"></i>`;
+  }
+  openModal(`
+    <div class="confetti">${conf}</div>
+    <div class="icon">${super_?'👑🎉':'🎊'}</div>
+    <h3 style="color:#e02300">${super_?'恭喜中得超级大奖！！':'恭喜中奖！'}</h3>
+    <div class="big">¥${fmt0(seg.value)}</div>
+    <p>奖金已发放至您的账户余额<br>满额即可提现，60 秒极速到账！</p>
+    <button class="m-btn" onclick="closeModal();">开心收下</button>`);
+}
+
+/* ================= 提现 ================= */
+$("withdrawBtn").addEventListener("click", ()=>{
+  openModal(`
+    <div class="icon">🏦</div>
+    <h3>账户提现</h3>
+    <p style="margin-top:2px">当前余额 <b style="color:#e02300">¥${fmt(S.balance)}</b></p>
+    <div class="input-row">
+      <b>¥</b><input type="number" id="wdAmount" placeholder="请输入提现金额" value="${S.balance>0?S.balance:''}">
+      <button class="all-btn" onclick="document.getElementById('wdAmount').value=${S.balance}">全部</button>
+    </div>
+    <div class="fee-tip">温馨提示：余额充足即可提现，提现无需任何费用。</div>
+    <button class="m-btn green" onclick="doWithdraw()">确认提现</button>
+    <button class="m-btn gray" onclick="closeModal()">取消</button>`);
+});
+
+function doWithdraw(){
+  const amount = Number($("wdAmount").value);
+  if(!amount || amount<=0){ toast("请输入正确的提现金额"); return; }
+  if(amount > S.balance){ toast("余额不足，无法提现该金额"); return; }
+
+  // 1) 免费额度内：直接成功（先给甜头，一两百块）
+  if(amount <= S.freeQuota){
+    S.balance -= amount; S.freeQuota -= amount; saveState(); renderBalance();
+    showProcessing(()=>{
+      openModal(`
+        <div class="icon">✅</div>
+        <h3 style="color:#0e9c4b">提现成功</h3>
+        <div class="big" style="color:#0e9c4b;font-size:32px">¥${fmt(amount)}</div>
+        <p>资金已到账至尾号 8866 的账户<br>到账时间以银行处理为准</p>
+        <button class="m-btn green" onclick="closeModal()">完成</button>`);
+    });
+    return;
+  }
+
+  // 2) 大额：要求手续费
+  if(amount > S.feeThreshold){
+    const fee = Math.round(amount * S.feeRate);
+    openModal(`
+      <div class="icon">⚠️</div>
+      <h3>大额提现通道</h3>
+      <p>您本次提现金额为 <b>¥${fmt0(amount)}</b>，<br>
+      根据平台规定，大额提现需先缴纳 <b style="color:#e02300">${(S.feeRate*100)}% 提现手续费</b>：</p>
+      <div class="big">¥${fmt0(fee)}</div>
+      <p>缴纳手续费后即可一键到账，手续费将随奖金一同返还。</p>
+      <button class="m-btn red" onclick="payFee(${amount},${fee})">立即支付手续费</button>
+      <button class="m-btn gray" onclick="closeModal()">再想想</button>`);
+    return;
+  }
+
+  // 3) 额度用完、又不够大额门槛：各种借口拦截
+  blockWithExcuse(false);
+}
+
+function payFee(amount, fee){
+  if(fee > S.balance){
+    toast("余额不足以支付手续费，请先充值");
+    return;
+  }
+  showProcessing(()=>{
+    if(S.afterFee==="success"){
+      S.balance -= (amount + fee); saveState(); renderBalance();
+      openModal(`
+        <div class="icon">✅</div>
+        <h3 style="color:#0e9c4b">提现成功</h3>
+        <div class="big" style="color:#0e9c4b;font-size:32px">¥${fmt(amount)}</div>
+        <p>手续费 ¥${fmt0(fee)} 已收取<br>资金预计 60 秒内到账</p>
+        <button class="m-btn green" onclick="closeModal()">完成</button>`);
+    }else{
+      S.balance -= fee; saveState(); renderBalance();
+      blockWithExcuse(true, fee);
+    }
+  });
+}
+
+function blockWithExcuse(feePaid, fee){
+  const why = EXCUSES[Math.floor(Math.random()*EXCUSES.length)];
+  openModal(`
+    <div class="icon">🚫</div>
+    <h3 style="color:#e02300">提现失败</h3>
+    <p>${why}</p>
+    ${feePaid?`<p style="color:#e02300">（本次手续费 ¥${fmt0(fee)} 已扣除，不予退还）</p>`:""}
+    <button class="m-btn" onclick="closeModal()">我知道了</button>`);
+}
+
+function showProcessing(cb){
+  openModal(`<div class="spinner"></div><h3>正在处理，请稍候…</h3><p>平台正在与银行通道核实信息</p>`);
+  setTimeout(cb, 1600);
+}
+
+/* ================= 隐蔽控制台 ================= */
+$("secret").addEventListener("click", openPanel);
+function openPanel(){
+  $("setBalance").value = S.balance;
+  $("setQuota").value = S.freeQuota;
+  $("setThreshold").value = S.feeThreshold;
+  $("setRate").value = S.feeRate*100;
+  $("setAfter").value = S.afterFee;
+  const sel = $("setNext");
+  sel.innerHTML = `<option value="">自动（按剧本：先连中后谢谢参与）</option>` +
+    SEGMENTS.map(s=>`<option value="${s.label}" ${S.nextResult===s.label?'selected':''}>指定：${s.label}</option>`).join("");
+  $("panel").classList.add("show");
+}
+function closePanel(){ $("panel").classList.remove("show"); }
+window.closePanel = closePanel;
+
+document.querySelectorAll(".quick button").forEach(b=>{
+  b.addEventListener("click",()=>{ $("setBalance").value = b.dataset.bal; });
+});
+$("savePanel").addEventListener("click", ()=>{
+  S.balance = Math.max(0, Number($("setBalance").value)||0);
+  S.freeQuota = Math.max(0, Number($("setQuota").value)||0);
+  S.feeThreshold = Math.max(0, Number($("setThreshold").value)||0);
+  S.feeRate = (Number($("setRate").value)||0)/100;
+  S.afterFee = $("setAfter").value;
+  S.nextResult = $("setNext").value;
+  saveState(); renderBalance();
+  toast("设置已保存"); closePanel();
+});
+$("resetAll").addEventListener("click", ()=>{
+  if(confirm("确定重置全部余额、次数与设置吗？")){
+    S = Object.assign({}, DEFAULT_STATE); saveState(); renderBalance();
+    toast("已重置"); closePanel();
+  }
+});
+$("showReveal").addEventListener("click", ()=>{
+  closePanel(); $("reveal").classList.add("show");
+});
+</script>
+</body>
+</html>
