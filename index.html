@@ -478,6 +478,28 @@ function closeModal(){ mask.classList.remove("show"); }
 mask.addEventListener("click", e=>{ if(e.target===mask) closeModal(); });
 
 /* ================= 抽奖 ================= */
+/* ===== 语音播报（浏览器自带TTS，安卓手机上即 Google 女声） ===== */
+let zhVoice=null;
+function pickVoice(){
+  try{
+    const vs=speechSynthesis.getVoices();
+    zhVoice = vs.find(v=>/zh[-_]CN/i.test(v.lang)&&/晓晓|Xiaoxiao|慧慧|Huihui|Yaoyao|Google|Ting[- ]?Ting|Mei[- ]?Jia/i.test(v.name))
+           || vs.find(v=>/zh[-_]CN/i.test(v.lang))
+           || vs.find(v=>/^zh/i.test(v.lang)) || null;
+  }catch(e){}
+}
+if("speechSynthesis" in window){ pickVoice(); speechSynthesis.onvoiceschanged=pickVoice; }
+function speak(t){
+  try{
+    if(!("speechSynthesis" in window)) return;
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(t);
+    u.lang="zh-CN"; if(zhVoice)u.voice=zhVoice;
+    u.rate=1; u.pitch=1.1;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+
 let spinning=false, rotation=0;
 $("spinBtn").addEventListener("click", ()=>{
   if(spinning) return;
@@ -507,8 +529,10 @@ $("spinBtn").addEventListener("click", ()=>{
     spinning=false; $("spinBtn").disabled=false; $("spinBtn").textContent="立即抽奖";
     if(seg.value>0){
       S.balance += seg.value; saveState(); renderBalance(); bump();
+      speak(seg.label==="超级大奖" ? "恭喜！中得超级大奖！" : "恭喜中奖，"+seg.label);
       showWin(seg);
     }else{
+      speak("谢谢参与");
       openModal(`
         <div class="icon">🍀</div>
         <h3>谢谢参与</h3>
